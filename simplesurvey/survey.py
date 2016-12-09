@@ -13,8 +13,8 @@ class DuplicateColumnException(Exception):
     pass
 
 
-def contingency_table(x, y):
-    return pd.crosstab(x, y)
+def contingency_table(x, y, **kwargs):
+    return pd.crosstab(x, y, **kwargs)
 
 
 class Chi2Test():
@@ -212,6 +212,16 @@ class Survey():
         data = self.slice(cols)
         return self.summarizer(data)
 
+    def crosstab(self, ind, dep, **kwargs):
+        independent = self.columns[ind]
+        dependent = self.columns[dep]
+
+        data = pd.crosstab(independent.data, dependent.data, **kwargs)
+        if dependent.scale:
+            data = data[dependent.ratings]
+
+        return data
+
     def responses(self, path, natural_key=None, header=0):
         if isinstance(path, pd.DataFrame):
             self._responses = path
@@ -256,9 +266,6 @@ class Survey():
         if cols:
             return self._concat(cols)
 
-    def _concat(self, cols):
-        return pd.concat(cols, axis=1, ignore_index=False)
-
     def add_column(self, column):
         if column.column in self.columns:
             raise DuplicateColumnException("Column with name %s already exists in survey" % column.column)
@@ -299,6 +306,9 @@ class Survey():
 
         self._format_data(merged_data)
         self.processed = True
+
+    def _concat(self, cols):
+        return pd.concat(cols, axis=1, ignore_index=False)
 
     def _verify_columns_exist(self, data):
         # TODO:: Fixup since we can only run this before calculated fields and can't check if
