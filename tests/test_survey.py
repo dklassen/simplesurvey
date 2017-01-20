@@ -29,8 +29,8 @@ questions:
 """
     try:
         simplesurvey.LoadSurvey(document)
-    except Exception:
-        pytest.fail("Unexpected Exception")
+    except Exception as e :
+        pytest.fail("Unexpected Exception: {}".format(e))
 
 
 def test_document_loading_follows_aliases():

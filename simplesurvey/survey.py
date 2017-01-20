@@ -74,7 +74,7 @@ class Column():
 
 class Question(Column):
 
-    def __init__(self, text, description=None, column=None, scale=None, breakdown=False):
+    def __init__(self, text, description=None, column=None, scale=None, breakdown_by=False):
         super().__init__()
 
         if column is None:
@@ -84,7 +84,7 @@ class Question(Column):
         self.scale = scale
         self.description = description
         self.text = text
-        self.breakdown = breakdown
+        self.breakdown_by = breakdown_by
 
     def describe(self, percentiles=None, include=None, exclude=None):
         if not self.is_loaded():
@@ -423,8 +423,8 @@ Result: pvalue=%s, test_statistic=%s""" % (self.dependent_label, self.independen
 def survey_yaml_constructor(loader, node):
     values = loader.construct_mapping(node, deep=True)
     survey = Survey()
-    survey.add_columns(values.get("questions"))
-    survey.add_columns(values.get("dimensions"))
+    survey.add_columns(values.get("questions", []))
+    survey.add_columns(values.get("dimensions", []))
     return survey
 
 
@@ -434,7 +434,7 @@ def question_yaml_constructor(loader, node):
                     description=values.get("description"),
                     column=values.get("column"),
                     scale=values.get("scale"),
-                    breakdown=values.get("breakdown", False))
+                    breakdown_by=values.get("breakdown_by", False))
 
 
 def dimension_yaml_constructor(loader, node):
@@ -442,7 +442,7 @@ def dimension_yaml_constructor(loader, node):
     return Dimension(values.get("text"),
                      column=values.get("column"),
                      calculated=values.get("calculated"),
-                     breakdown=values.get("breakdown", False))
+                     breakdown_by=values.get("breakdown_by", False))
 
 yaml.add_constructor("!Survey", survey_yaml_constructor)
 yaml.add_constructor("!Question", question_yaml_constructor)
