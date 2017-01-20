@@ -290,7 +290,7 @@ class Survey():
     def slice(self, columns):
         if not self.processed:
             self.process()
-            
+
         columns = [col.data for name, col in self.columns.items() if name in columns]
         return pd.concat(columns, axis=1, ignore_index=False)
 
@@ -423,8 +423,8 @@ Result: pvalue=%s, test_statistic=%s""" % (self.dependent_label, self.independen
 def survey_yaml_constructor(loader, node):
     values = loader.construct_mapping(node, deep=True)
     survey = Survey()
-    survey.add_columns(values.get("questions")
-    survey.add_columns(values.get("dimensions")
+    survey.add_columns(values.get("questions"))
+    survey.add_columns(values.get("dimensions"))
     return survey
 
 
