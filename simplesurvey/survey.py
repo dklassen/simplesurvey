@@ -34,7 +34,7 @@ class Chi2Test():
         return self._build_result(independent.text, dependent.text, result)
 
     def _build_result(self, independent_label, dependent_label, result):
-        return Chi2TestResult(dependent_label, independent_label, *result)
+        return Chi2TestResult(dependent_label, independent_label,  *result)
 
 
 class KruskallWallisTest():
@@ -42,21 +42,15 @@ class KruskallWallisTest():
     def test(self, independent, dependent):
         groups = []
 
-        data = pd.merge(
-            independent._data,
-            dependent._data,
-            left_index=True,
-            right_index=True)
+        data = pd.merge(independent._data, dependent._data, left_index=True, right_index=True)
         for _, group in data.groupby(independent.column):
             groups.append(group)
 
         result = stats.mstats.kruskalwallis(*groups)
         return self._build_result(independent.text, dependent.text, *result)
 
-    def _build_result(self, independent_label,
-                      dependent_label, hstatistic, pvalue):
-        return KruskallWallisTestResult(
-            dependent_label, independent_label, hstatistic, pvalue)
+    def _build_result(self, independent_label, dependent_label, hstatistic, pvalue):
+        return KruskallWallisTestResult(dependent_label, independent_label, hstatistic, pvalue)
 
 
 class Column():
@@ -80,8 +74,7 @@ class Column():
 
 class Question(Column):
 
-    def __init__(self, text, description=None,
-                 column=None, scale=None, breakdown=False):
+    def __init__(self, text, description=None, column=None, scale=None, breakdown=False):
         super().__init__()
 
         if column is None:
@@ -96,8 +89,7 @@ class Question(Column):
     def describe(self, percentiles=None, include=None, exclude=None):
         if not self.is_loaded():
             return None
-        return self._data.describe(
-            percentiles=percentiles, include=include, exclude=exclude)
+        return self._data.describe(percentiles=percentiles, include=include, exclude=exclude)
 
     def replace_responses(self):
         if self.scale:
@@ -235,8 +227,7 @@ class Survey():
         if isinstance(path, pd.DataFrame):
             self._responses = path
         else:
-            self._load_responses_into_dataframe(
-                path, natural_key=natural_key, header=header)
+            self._load_responses_into_dataframe(path, natural_key=natural_key, header=header)
 
         return self
 
@@ -249,8 +240,7 @@ class Survey():
 
     def supplementary_data(self, path, natural_key=None, header=0):
         if natural_key is None:
-            raise Exception(
-                "Must supply natural key if joining supplmentary data to responses")
+            raise Exception("Must supply natural key if joining supplmentary data to responses")
 
         data = self._load(path, header=header)
 
@@ -262,8 +252,7 @@ class Survey():
 
     @property
     def dimensions(self):
-        return [col for _, col in self.columns.items(
-        ) if isinstance(col, Dimension)]
+        return [col for _, col in self.columns.items() if isinstance(col, Dimension)]
 
     @property
     def questions(self):
@@ -280,15 +269,11 @@ class Survey():
 
     def add_column(self, column):
         if column.column in self.columns:
-            raise DuplicateColumnException(
-                "Column with name %s already exists in survey" % column.column)
+            raise DuplicateColumnException("Column with name %s already exists in survey" % column.column)
         self.columns[column.column] = column
         return self
 
     def add_columns(self, columns):
-        if not columns:
-            return self
-
         for column in columns:
             self.add_column(column)
         return self
@@ -303,30 +288,24 @@ class Survey():
         return data
 
     def slice(self, columns):
+        if not self.processed:
+            self.process()
+            
         columns = [col.data for name, col in self.columns.items() if name in columns]
         return pd.concat(columns, axis=1, ignore_index=False)
 
     def process(self):
         merged_data = self._responses.copy()
 
-        if all(merged_data.index.values == [0]) and len(
-                self._supplementary_data) > 0:
-            raise SurveyLoadingException(
-                "Responses are being joined with out specified natural key")
+        if all(merged_data.index.values == [0]) and len(self._supplementary_data) > 0:
+            raise SurveyLoadingException("Responses are being joined with out specified natural key")
 
         for data in self._supplementary_data:
             try:
-                merged_data = pd.merge(
-                    merged_data,
-                    data,
-                    suffixes=('', ''),
-                    left_index=True,
-                    right_index=True,
-                    how="left")
+                merged_data = pd.merge(merged_data, data, suffixes=('', ''), left_index=True, right_index=True, how="left")
             except ValueError as e:
                 if str(e).startswith("columns overlap"):
-                    raise SurveyLoadingException(
-                        "No overlapping columns in supplementary data")
+                    raise SurveyLoadingException("No overlapping columns in supplementary data")
                 raise e
 
         self._format_data(merged_data)
@@ -338,12 +317,10 @@ class Survey():
     def _verify_columns_exist(self, data):
         # TODO:: Fixup since we can only run this before calculated fields and can't check if
         # calculated fields were created
-        columns = set([entry.column if entry.is_loaded(
-        ) else entry.text for _, entry in self.columns.items() if not entry.calculated])
+        columns = set([entry.column if entry.is_loaded() else entry.text for _, entry in self.columns.items() if not entry.calculated])
         missing_columns = columns.difference(data.columns)
         if missing_columns:
-            raise SurveyLoadingException(
-                "Found missing columns not in dataset %s" % missing_columns)
+            raise SurveyLoadingException("Found missing columns not in dataset %s" % missing_columns)
 
     def _column_mapping(self):
         return {column.text: column.column for _, column in self.columns.items() if column.calculated is None}
@@ -357,8 +334,7 @@ class Survey():
             data.drop(entry.column, 1)
 
     def _create_calculated_columns(self, data):
-        # TODO:: Find better way of doing this. Perhaps separate list for
-        # calculated columns
+        # TODO:: Find better way of doing this. Perhaps separate list for calculated columns
         data = data.copy()
         for _, entry in self.columns.items():
             if entry.calculated:
@@ -391,8 +367,7 @@ class Survey():
         return loader(path, header=header)
 
     def _filter_questions_for_breakdown(self):
-        return [question for _, question in self.columns.items() if isinstance(
-            question, Question) and question.breakdown]
+        return [question for _, question in self.columns.items() if isinstance(question, Question) and question.breakdown]
 
     def breakdown_by_dimensions(self, threshold):
         """ {"question1": [Result1, Result2]}"""
@@ -407,8 +382,7 @@ class Survey():
 
 class Chi2TestResult():
 
-    def __init__(self, dependent_label, independent_label,
-                 chi2_statistic, pvalue, degrees_of_freedom, expected):
+    def __init__(self, dependent_label, independent_label, chi2_statistic, pvalue, degrees_of_freedom, expected):
         self.independent_label = independent_label
         self.dependent_label = dependent_label
         self.chi2_statistic = chi2_statistic
@@ -449,8 +423,8 @@ Result: pvalue=%s, test_statistic=%s""" % (self.dependent_label, self.independen
 def survey_yaml_constructor(loader, node):
     values = loader.construct_mapping(node, deep=True)
     survey = Survey()
-    survey.add_columns(values.get("questions"))
-    survey.add_columns(values.get("dimensions"))
+    survey.add_columns(values.get("questions")
+    survey.add_columns(values.get("dimensions")
     return survey
 
 
@@ -468,7 +442,7 @@ def dimension_yaml_constructor(loader, node):
     return Dimension(values.get("text"),
                      column=values.get("column"),
                      calculated=values.get("calculated"),
-                     breakdown_by=values.get("breakdown_by", False))
+                     breakdown=values.get("breakdown", False))
 
 yaml.add_constructor("!Survey", survey_yaml_constructor)
 yaml.add_constructor("!Question", question_yaml_constructor)
