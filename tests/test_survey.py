@@ -25,7 +25,7 @@ questions:
       scale: *standard_likert
 """
     try:
-        result = simplesurvey.LoadSurvey(document)
+        simplesurvey.LoadSurvey(document)
     except Exception:
         pytest.fail("Unexpected Exception")
 
