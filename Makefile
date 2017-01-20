@@ -1,7 +1,18 @@
+python_files := (find bin -type f -exec bash -c 'head -n1 "$$0" | grep -q python' '{}' ';' -print0 && find . -path '*/.*' -prune -o -name '*.py' -print0)
 
 clean:
-	find . \( -name './simplesurvey/*.pyc' -o -name './simplesurvey/*.pyo' -o -name './simplesurvey/*~' \) -print -delete
-	find . -name './simplesurvey/__pycache__' -exec rm -rvf '{}' +
+	find . \( -name '*.pyc' -o -name '*.pyo' -o -name '*~' \) -print -delete
+	find . -name '__pycache__' -exec rm -rvf '{}' +
 
-test: clean
-	py.test tests -v -s -x
+test: autopep8 lint clean
+	py.test --durations=10 --random tests -v -s -x
+
+autopep8:
+	  @echo 'Auto Formatting...'
+	  @$(python_files) | xargs - 0 autopep8 - -jobs 0 - -in-place - -aggressive
+
+lint:
+	@echo 'Linting...'
+	@$(python_files) | xargs -0 -n200 -P16 flake8
+
+autolint: autopep8 lint
