@@ -4,3 +4,4 @@
 
 from simplesurvey.survey import *
 from simplesurvey.scale import *
+from simplesurvey.loader import *
