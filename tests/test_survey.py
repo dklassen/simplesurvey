@@ -14,6 +14,9 @@ scales:
       labels: ["Strongly Disagree","Disagree","Neutral","Agree","Strongly Agree"]
       ratings: [ 1,2,3,4,5]
 questions:
+    - !Dimension
+      text: "What is your email?"
+      column: email
     - !Question
       text: "How many engineers does it take to screw in a lightbulb?"
       description: |

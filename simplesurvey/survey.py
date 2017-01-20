@@ -468,7 +468,7 @@ def dimension_yaml_constructor(loader, node):
     return Dimension(values.get("text"),
                      column=values.get("column"),
                      calculated=values.get("calculated"),
-                     breakdown=values.get("breakdown", False))
+                     breakdown_by=values.get("breakdown_by", False))
 
 yaml.add_constructor("!Survey", survey_yaml_constructor)
 yaml.add_constructor("!Question", question_yaml_constructor)
