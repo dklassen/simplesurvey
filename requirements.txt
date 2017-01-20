@@ -4,6 +4,7 @@ numpy==1.11.0
 pandas==0.19.1
 pytest==3.0.4
 pytest-radom==0.2
+pylint==1.6.4
 scipy==0.18.1
 simplesurvey==0.0.3
 termcolor==1.1.0
