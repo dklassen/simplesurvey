@@ -1,3 +1,4 @@
+import yaml
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -414,3 +415,32 @@ class KruskallWallisTestResult():
 Dependent: %s
 Independent: %s
 Result: pvalue=%s, test_statistic=%s""" % (self.dependent_label, self.independent_label, self.pvalue, self.test_statistic)
+
+
+def survey_yaml_constructor(loader, node):
+    values = loader.construct_mapping(node, deep=True)
+    survey = Survey()
+    survey.add_columns(values.get("questions"))
+    survey.add_columns(values.get("dimensions"))
+    return survey
+
+
+def question_yaml_constructor(loader, node):
+    values = loader.construct_mapping(node)
+    return Question(values.get("text"),
+                    description=values.get("description"),
+                    column=values.get("column"),
+                    scale=values.get("scale"),
+                    breakdown=values.get("breakdown", False))
+
+
+def dimension_yaml_constructor(loader, node):
+    values = loader.construct_mapping(node)
+    return Dimension(values.get("text"),
+                     column=values.get("column"),
+                     calculated=values.get("calculated"),
+                     breakdown=values.get("breakdown", False))
+
+yaml.add_constructor("!Survey", survey_yaml_constructor)
+yaml.add_constructor("!Question", question_yaml_constructor)
+yaml.add_constructor("!Dimension", dimension_yaml_constructor)

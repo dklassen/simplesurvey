@@ -1,7 +1,58 @@
 import pytest
+import yaml
 import pandas as pd
 import numpy as np
 import simplesurvey
+
+
+def test_loading_survey_from_yaml():
+    document = """
+--- !Survey
+scales:
+    - !OrdinalScale
+      &standard_likert
+      labels: ["Strongly Disagree","Disagree","Neutral","Agree","Strongly Agree"]
+      ratings: [ 1,2,3,4,5]
+questions:
+    - !Question
+      text: "How many engineers does it take to screw in a lightbulb?"
+      description: |
+                    "A question for the engineers in the crowd we are
+                    asking to see if there is a difference in the
+                    number of reported light bulbs depending on what
+                    you do for a living"
+      column: "engineer_lightbulb_question"
+      scale: *standard_likert
+"""
+    try:
+        result = simplesurvey.LoadSurvey(document)
+    except Exception:
+        pytest.fail("Unexpected Exception")
+
+
+def test_document_loading_follows_aliases():
+    document = """
+- !OrdinalScale
+  &standard_likert
+  labels: ["Strongly Disagree","Disagree","Neutral","Agree","Strongly Agree"]
+  ratings: [ 1,2,3,4,5]
+- !Question
+  text: "How many engineers does it take to screw in a lightbulb?"
+  description: |
+                "A question for the engineers in the crowd we are
+                asking to see if there is a difference in the
+                number of reported light bulbs depending on what
+                you do for a living"
+  column: "engineer_lightbulb_question"
+  scale: *standard_likert
+"""
+
+    result = list(yaml.load_all(document))[0]
+    assert len(result) == 2
+
+    result_question = result[1]
+    assert result_question.scale.ratings == list(
+        range(1, 6))  # range is exclusive
 
 
 def test_set_response_data(tmpdir):
@@ -39,7 +90,8 @@ def test_supplementary_data(tmpdir):
           .process()
 
     result = survey.data
-    assert sorted(list(result.columns)) == sorted(['col2', 'col3', 'sup2', 'sup3'])
+    assert sorted(list(result.columns)) == sorted(
+        ['col2', 'col3', 'sup2', 'sup3'])
 
 
 def test_supplementary_data_overlapping_throws_exception(tmpdir):
@@ -59,7 +111,8 @@ def test_supplementary_data_overlapping_throws_exception(tmpdir):
         survey.process()
 
 
-def test_responses_with_no_natural_key_raises_when_supplementary_data_added(tmpdir):
+def test_responses_with_no_natural_key_raises_when_supplementary_data_added(
+        tmpdir):
     survey = simplesurvey.Survey()
     path = tmpdir.join("data.csv")
     path.write("""col1,col2,col3
@@ -102,7 +155,8 @@ def test_add_and_load_calculated_dimension_to_survey():
     data = pd.DataFrame(data={'col1': [1], 'col2': ['2']})
     survey._responses = data
 
-    calculated_dimension = simplesurvey.Dimension('calc_column', calculated=times_2)
+    calculated_dimension = simplesurvey.Dimension(
+        'calc_column', calculated=times_2)
     survey.add_column(calculated_dimension)
 
     assert len(survey.dimensions) == 1
@@ -173,6 +227,7 @@ def test_summarizer_row_summary():
     result = summarizer.row_summary()
     assert result.loc['count'][0] == 5
 
+
 def test_survey_summary_returns_summarizer_with_loaded_columns():
     data = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
     survey = simplesurvey.Survey()
@@ -182,4 +237,3 @@ def test_survey_summary_returns_summarizer_with_loaded_columns():
 
     result = survey.summarize(['a'])
     assert isinstance(result, simplesurvey.Summarizer)
-    
