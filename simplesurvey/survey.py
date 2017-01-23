@@ -273,8 +273,10 @@ class Survey():
             self.process()
 
         cols = [entry.data for _, entry in self.columns.items()]
-        if cols:
-            return self._concat(cols)
+        if not cols:
+            return None
+
+        return self._concat(cols)
 
     def add_column(self, column):
         if column.column in self.columns:
