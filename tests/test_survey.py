@@ -17,8 +17,20 @@ questions:
     - !Dimension
       text: "What is your email?"
       column: email
+      filters:
+        - |
+            lambda x: x == 1
+        - |
+            lambda x: x > 10
     - !Question
       text: "How many engineers does it take to screw in a lightbulb?"
+      filters:
+        - |
+            lambda x: pd.isnull(x)
+        - |
+            lambda x: x == 1
+        - |
+            lambda x: x > 10
       description: |
                     "A question for the engineers in the crowd we are
                     asking to see if there is a difference in the
@@ -171,17 +183,16 @@ def test_add_and_load_calculated_dimension_to_survey():
 
 def test_simple_filter_data():
     survey = simplesurvey.Survey()
-    question1 = simplesurvey.Question("col1")
+    question1 = simplesurvey.Question("col1").add_filter(lambda x: x == 1)
+
     data = pd.DataFrame(data={'col1': [1, 2, 3], 'col2': [2, 3, 4]})
 
     survey._responses = data
     survey.add_column(question1)\
-          .add_filter(lambda x: x.col1 == 1)\
           .process()
 
     result = survey.data
     expected = pd.DataFrame({'col1': [1]})
-
     assert result.equals(expected)
 
 
