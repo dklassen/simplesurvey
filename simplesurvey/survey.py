@@ -55,13 +55,53 @@ class KruskallWallisTest():
 
 class Column():
 
-    def __init__(self):
+    def __init__(self, text, column=None, description=None, calculated=None):
+        if column is None:
+            self._column = text
+        else:
+            self._column = column
+
+        self.description = description
+        self.text = text
+
         self._data = None
-        self.calculated = None
+        self._filters = []
+        self._transforms = []
+        self.calculated = calculated
+
+    @property
+    def column(self):
+        return self._column
 
     @property
     def data(self):
+        self.transform()
+        self.filter()
         return self._data.copy()
+
+    @property
+    def filters(self):
+        return self._filters
+
+    def add_transform(self, func):
+        """ Append a transform func to the list of transform funcs """
+        self._transforms.append(func)
+        return self
+
+    def transform(self):
+        """ tranform applies a map of the list of stored transforms to the data """
+        for func in self._transforms:
+            self._data = self._data.map(func)
+
+    def add_filter(self, func):
+        """ Append filter func to the list of filter funcs. """
+        self._filters.append(func)
+        return self
+
+    def filter(self):
+        """ Filter applies filters funcs to data."""
+        for func in self._filters:
+            self._data = self._data.loc[func]
 
     def is_loaded(self):
         if self._data:
@@ -75,15 +115,8 @@ class Column():
 class Question(Column):
 
     def __init__(self, text, description=None, column=None, scale=None, breakdown_by=False):
-        super().__init__()
-
-        if column is None:
-            self.column = text
-        else:
-            self.column = column
+        super().__init__(text, column=column, description=description)
         self.scale = scale
-        self.description = description
-        self.text = text
         self.breakdown_by = breakdown_by
 
     def describe(self, percentiles=None, include=None, exclude=None):
@@ -103,32 +136,10 @@ class Question(Column):
 class Dimension(Column):
 
     def __init__(self, text, column=None, calculated=None, breakdown_by=None):
-        super().__init__()
-
+        super().__init__(text, column=column, calculated=calculated)
         if breakdown_by is None:
             breakdown_by = Chi2Test
-
-        self.filters = []
-
-        if column is None:
-            self._column = text
-        else:
-            self._column = column
-
-        self.calculated = calculated
-        self.text = text
         self.breakdown_by = breakdown_by
-
-    @property
-    def column(self):
-        return self._column
-
-    def add_filter(self, func):
-        self.filters.append(func)
-
-    def _filter(self):
-        for f in self.filters:
-            self.data = self.data.loc[f]
 
     def categories(self):
         return self.data.unique()
@@ -137,7 +148,6 @@ class Dimension(Column):
         return list(combinations(self.categories(), 2))
 
     def breakdown_with(self, question):
-        self._filter()
         return self.breakdown_by().test(self, question)
 
 
@@ -204,7 +214,6 @@ class Survey():
 
         self._responses = None
         self._supplementary_data = []
-        self.filters = []
         self.columns = {}
         self.processed = False
         self.summarizer = summarizer
