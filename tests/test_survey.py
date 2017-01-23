@@ -41,7 +41,7 @@ questions:
 """
     try:
         simplesurvey.LoadSurvey(document)
-    except Exception as e :
+    except Exception as e:
         pytest.fail("Unexpected Exception: {}".format(e))
 
 

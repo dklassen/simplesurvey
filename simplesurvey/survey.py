@@ -432,10 +432,10 @@ def survey_yaml_constructor(loader, node):
 def question_yaml_constructor(loader, node):
     values = loader.construct_mapping(node)
     question = Question(values.get("text"),
-                    description=values.get("description"),
-                    column=values.get("column"),
-                    scale=values.get("scale"),
-                    breakdown_by=values.get("breakdown_by", False))
+                        description=values.get("description"),
+                        column=values.get("column"),
+                        scale=values.get("scale"),
+                        breakdown_by=values.get("breakdown_by", False))
 
     # NOTE:: Note to future self - eval is the devil
     if values.get("filters"):
@@ -448,9 +448,9 @@ def question_yaml_constructor(loader, node):
 def dimension_yaml_constructor(loader, node):
     values = loader.construct_mapping(node)
     dimension = Dimension(values.get("text"),
-                     column=values.get("column"),
-                     calculated=values.get("calculated"),
-                     breakdown_by=values.get("breakdown_by", False))
+                          column=values.get("column"),
+                          calculated=values.get("calculated"),
+                          breakdown_by=values.get("breakdown_by", False))
 
     # NOTE:: Note to future self - eval is the devil
     if values.get("filters"):
