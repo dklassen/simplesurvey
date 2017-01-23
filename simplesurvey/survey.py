@@ -289,15 +289,6 @@ class Survey():
             self.add_column(column)
         return self
 
-    def add_filter(self, func):
-        self.filters.append(func)
-        return self
-
-    def _apply_filters(self, data):
-        for f in self.filters:
-            data = data.loc[f, :]
-        return data
-
     def slice(self, columns):
         if not self.processed:
             self.process()
@@ -356,7 +347,6 @@ class Survey():
         self._verify_columns_exist(data)
         data = self._rename_columns(data)
         data = self._create_calculated_columns(data)
-        data = self._apply_filters(data)
         self._load_data(data)
 
     def _read_excel(self, path, header=0):
