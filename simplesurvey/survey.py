@@ -97,8 +97,8 @@ class Question(Column):
 
 class Dimension(Column):
 
-    def __init__(self, text, column=None, calculated=None, breakdown_by=None):
-        super().__init__(text, column=column, calculated=calculated)
+    def __init__(self, text, description=None, column=None, calculated=None, breakdown_by=None):
+        super().__init__(text, description=description, column=column, calculated=calculated)
         if breakdown_by is None:
             breakdown_by = Chi2Test
         self.breakdown_by = breakdown_by
@@ -416,6 +416,10 @@ def question_yaml_constructor(loader, node):
         for func_st in values.get("filters"):
             question.add_filter(eval(func_st))
 
+    if values.get("transforms"):
+        for func_st in values.get("transforms"):
+            question.add_transform(eval(func_st))
+
     return question
 
 
@@ -423,6 +427,7 @@ def dimension_yaml_constructor(loader, node):
     values = loader.construct_mapping(node)
     dimension = Dimension(values.get("text"),
                           column=values.get("column"),
+                          description=values.get("description"),
                           calculated=values.get("calculated"),
                           breakdown_by=values.get("breakdown_by", False))
 
@@ -430,6 +435,10 @@ def dimension_yaml_constructor(loader, node):
     if values.get("filters"):
         for func_st in values.get("filters"):
             dimension.add_filter(eval(func_st))
+
+    if values.get("transforms"):
+        for func_st in values.get("transforms"):
+            dimension.add_transform(eval(func_st))
 
     return dimension
 
