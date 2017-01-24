@@ -218,8 +218,7 @@ class Survey():
         if not isinstance(data, pd.DataFrame):
             data = self._load(data, header=header)
 
-        if natural_key is not None:
-            data = data.set_index(natural_key)
+        data = data.set_index(natural_key)
 
         self._supplementary_data.append(data)
         return self
