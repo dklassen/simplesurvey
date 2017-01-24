@@ -390,7 +390,6 @@ class TypeFormSurvey(Survey):
         if index:
             self._responses = self._responses.set_index(index)
 
-        self.process()
         return self
 
 # NOTE:: Lets dry this up so we don't have a bunch of these
