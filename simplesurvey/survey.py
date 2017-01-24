@@ -66,7 +66,7 @@ class Column():
             self._data = self._data.loc[func]
 
     def is_loaded(self):
-        if isinstance(self._data, pd.Series) and not self._data.empty():
+        if isinstance(self._data, pd.Series) and not self._data.empty:
             return True
         return False
 
@@ -385,6 +385,8 @@ class TypeFormSurvey(Survey):
 
 # NOTE:: Lets dry this up so we don't have a bunch of these
 # yaml parsers laying around
+
+
 def typeform_survey_yaml_constructor(loader, node):
     survey = TypeFormSurvey()
     values = loader.construct_mapping(node, deep=True)
