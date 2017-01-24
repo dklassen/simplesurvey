@@ -209,11 +209,14 @@ class Survey():
             self._responses = self._responses.set_index(natural_key)
         return self
 
-    def supplementary_data(self, path, natural_key=None, header=0):
+    def supplementary_data(self, path_or_dataframe, natural_key=None, header=0):
         if natural_key is None:
             raise Exception("Must supply natural key if joining supplmentary data to responses")
 
-        data = self._load(path, header=header)
+        data = path_or_dataframe
+
+        if not isinstance(data, pd.DataFrame):
+            data = self._load(data, header=header)
 
         if natural_key is not None:
             data = data.set_index(natural_key)
