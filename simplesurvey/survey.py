@@ -346,14 +346,18 @@ class Survey():
 class TypeFormSurvey(Survey):
     typeform_url = "https://api.typeform.com/v1/form/{}?key={}"
 
-    def __init__(self, form_uuid, api_key, summarizer=None):
+    def __init__(self, summarizer=None):
         super().__init__(summarizer)
-        self.form_uuid = form_uuid
-        self.api_key = api_key
+        self.form_uuid = None
+        self.api_key = None
 
     @property
     def url(self):
         return self.typeform_url.format(self.form_uuid, self.api_key)
+
+    def config(self, api_key, form_uuid):
+        self.api_key = api_key
+        self.form_uuid = form_uuid
 
     def fetch_data(self):
         response = requests.get(self.url)
