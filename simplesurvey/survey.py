@@ -66,7 +66,7 @@ class Column():
             self._data = self._data.loc[func]
 
     def is_loaded(self):
-        if self._data:
+        if isinstance(self._data, pd.Series) and not self._data.empty():
             return True
         return False
 
