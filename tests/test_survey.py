@@ -42,6 +42,28 @@ def test_typeform_fetch_and_index_responses_by_id():
     assert result == pd.Index(["j.crew@gmail.com"])
 
 
+def test_loading_typeform_survey_from_yaml():
+    document = """
+--- !TypeFormSurvey
+uuid: i-am-a-uuid
+scales:
+  - !OrdinalScale
+    &seven_point_scale
+    labels: [1,2,3,4,5,6,7]
+    ratings: [1,2,3,4,5,6,7]
+questions:
+  - !Question
+    text: "How would you rate the amount of information you received during the Shopify Walkthrough?"
+    column: "walkthrough_rating"
+    scale: *seven_point_scale
+"""
+    try:
+        survey = simplesurvey.LoadSurvey(document)
+        assert survey.form_uuid == "i-am-a-uuid"
+    except Exception as e:
+        pytest.fail("Unexpected Exception: {}".format(e))
+
+
 def test_loading_survey_from_yaml():
     document = """
 --- !Survey

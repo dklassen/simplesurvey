@@ -348,9 +348,9 @@ class Survey():
 class TypeFormSurvey(Survey):
     typeform_url = "https://api.typeform.com/v1/form/{}?key={}"
 
-    def __init__(self, summarizer=None):
+    def __init__(self, form_uuid=None, summarizer=None):
         super().__init__(summarizer)
-        self.form_uuid = None
+        self.form_uuid = form_uuid
         self.api_key = None
 
     @property
@@ -359,7 +359,8 @@ class TypeFormSurvey(Survey):
 
     def config(self, token=None, uuid=None):
         self.api_key = token
-        self.form_uuid = uuid
+        if uuid:
+            self.form_uuid = uuid
 
     def fetch_data(self):
         response = requests.get(self.url)
@@ -399,8 +400,8 @@ class TypeFormSurvey(Survey):
 
 
 def typeform_survey_yaml_constructor(loader, node):
-    survey = TypeFormSurvey()
     values = loader.construct_mapping(node, deep=True)
+    survey = TypeFormSurvey(values.get("uuid"))
     survey.add_columns(values.get("questions", []))
     survey.add_columns(values.get("dimensions", []))
     return survey
