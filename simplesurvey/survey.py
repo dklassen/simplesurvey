@@ -1,8 +1,9 @@
 import yaml
+import requests
 import numpy as np
 import pandas as pd
-import scipy.stats as stats
 
+from simplesurvey import Chi2Test
 from itertools import product, combinations
 
 
@@ -12,45 +13,6 @@ class SurveyLoadingException(Exception):
 
 class DuplicateColumnException(Exception):
     pass
-
-
-def contingency_table(x, y, **kwargs):
-    return pd.crosstab(x, y, **kwargs)
-
-
-class Chi2Test():
-
-    def _generate_observed(self, independent, dependent):
-        cross_tab = contingency_table(independent, dependent)
-        row, col = cross_tab.shape
-        observed = cross_tab.iloc[0:row, 0:col]
-        observed.index = cross_tab.index
-        observed.columns = cross_tab.columns
-        return observed
-
-    def test(self, independent, dependent):
-        observed = self._generate_observed(independent._data, dependent._data)
-        result = stats.chi2_contingency(observed=observed)
-        return self._build_result(independent.text, dependent.text, result)
-
-    def _build_result(self, independent_label, dependent_label, result):
-        return Chi2TestResult(dependent_label, independent_label,  *result)
-
-
-class KruskallWallisTest():
-
-    def test(self, independent, dependent):
-        groups = []
-
-        data = pd.merge(independent._data, dependent._data, left_index=True, right_index=True)
-        for _, group in data.groupby(independent.column):
-            groups.append(group)
-
-        result = stats.mstats.kruskalwallis(*groups)
-        return self._build_result(independent.text, dependent.text, *result)
-
-    def _build_result(self, independent_label, dependent_label, hstatistic, pvalue):
-        return KruskallWallisTestResult(dependent_label, independent_label, hstatistic, pvalue)
 
 
 class Column():
@@ -381,49 +343,54 @@ class Survey():
         return breakdown
 
 
-class Chi2TestResult():
+class TypeFormSurvey(Survey):
+    typeform_url = "https://api.typeform.com/v1/form/{}?key={}"
 
-    def __init__(self, dependent_label, independent_label, chi2_statistic, pvalue, degrees_of_freedom, expected):
-        self.independent_label = independent_label
-        self.dependent_label = dependent_label
-        self.chi2_statistic = chi2_statistic
-        self.pvalue = pvalue
-        self.expected = expected
-        self.degrees_of_freedom = degrees_of_freedom
+    def __init__(self, form_uuid, api_key, summarizer=None):
+        super().__init__(summarizer)
+        self.form_uuid = form_uuid
+        self.api_key = api_key
 
     @property
-    def test_statistic(self):
-        return self.chi2_statistic
+    def url(self):
+        return self.typeform_url.format(self.form_uuid, self.api_key)
 
-    def __str__(self):
-        return """Chi2 Test:
-Dependent: %s
-Independent: %s
-Result: pvalue=%s test_statistic=%s """ % (self.dependent_label, self.independent_label, self.pvalue, self.test_statistic)
+    def fetch_data(self):
+        response = requests.get(self.url)
+        if response.status_code != 200:
+            raise "Encountered an error while trying to download from TypeForm: {}".format(response.status_code)
+        return response
 
+    def fetch(self):
+        """ Download data for a form and convert to a data frame"""
+        data = self.fetch_data()
 
-class KruskallWallisTestResult():
+        responses = [x for x in data.json()['responses'] if x['completed'] == '1']
+        questions = {x['id']: x['question'] for x in data.json()['questions']}
 
-    def __init__(self, dependent_label, independent_label, hstat, pvalue):
-        self.dependent_label = dependent_label
-        self.independent_label = independent_label
-        self.hstatistic = hstat
-        self.pvalue = pvalue
+        data = dict((el, []) for el in questions.keys())
+        for r in responses:
+            r = r['answers']
 
-    @property
-    def test_statistic(self):
-        return self.hstatistic
+            for key in data.keys():
+                data[key].append(r.get(key, pd.NaT))
 
-    def __str__(self):
-        return """KruskallWallis Test:
-Dependent: %s
-Independent: %s
-Result: pvalue=%s, test_statistic=%s""" % (self.dependent_label, self.independent_label, self.pvalue, self.test_statistic)
+        self._responses = pd.DataFrame(data).rename(columns=questions)
+        return self
+
+# NOTE:: Lets dry this up so we don't have a bunch of these
+# yaml parsers laying around
+def typeform_survey_yaml_constructor(loader, node):
+    survey = TypeFormSurvey()
+    values = loader.construct_mapping(node, deep=True)
+    survey.add_columns(values.get("questions", []))
+    survey.add_columns(values.get("dimensions", []))
+    return survey
 
 
 def survey_yaml_constructor(loader, node):
-    values = loader.construct_mapping(node, deep=True)
     survey = Survey()
+    values = loader.construct_mapping(node, deep=True)
     survey.add_columns(values.get("questions", []))
     survey.add_columns(values.get("dimensions", []))
     return survey
@@ -459,6 +426,7 @@ def dimension_yaml_constructor(loader, node):
 
     return dimension
 
+yaml.add_constructor("!TypeFormSurvey", typeform_survey_yaml_constructor)
 yaml.add_constructor("!Survey", survey_yaml_constructor)
 yaml.add_constructor("!Question", question_yaml_constructor)
 yaml.add_constructor("!Dimension", dimension_yaml_constructor)

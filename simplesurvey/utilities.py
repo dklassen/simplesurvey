@@ -1,4 +1,9 @@
 import math
+import pandas as pd
+
+
+def contingency_table(x, y, **kwargs):
+    return pd.crosstab(x, y, **kwargs)
 
 
 def to_ordinal(n):
