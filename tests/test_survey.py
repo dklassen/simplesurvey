@@ -4,6 +4,43 @@ import pandas as pd
 import numpy as np
 import simplesurvey
 
+from unittest import mock
+
+
+class MockResponse:
+
+    def __init__(self, json_data, status_code):
+        self.json_data = json_data
+        self.status_code = status_code
+
+    def json(self):
+        return self.json_data
+
+
+def mock_typeform_data():
+    return {
+        'questions': [{'field_id': 28707397,
+                       'id': 'email_28707397',
+                       'question': "What's your Shopify email address?"}, ],
+        'responses': [
+            {'completed': '1', 'answers': {'email_28707397': 'J.crew@gmail.com', }}
+        ],
+    }
+
+
+def mocked_requests_get(*args, **kwargs):
+    if "typeform.com" in args[0]:
+        return MockResponse(mock_typeform_data(), 200)
+
+
+def test_typeform_fetch_and_index_responses_by_id():
+    with mock.patch('requests.get', side_effect=mocked_requests_get):
+        test_survey = simplesurvey.TypeFormSurvey()
+        test_survey.fetch(index="What's your Shopify email address?", transform=lambda x: x.lower())
+
+    result = test_survey._responses.index
+    assert result == pd.Index(["j.crew@gmail.com"])
+
 
 def test_loading_survey_from_yaml():
     document = """

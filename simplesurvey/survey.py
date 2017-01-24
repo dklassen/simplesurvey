@@ -365,8 +365,11 @@ class TypeFormSurvey(Survey):
             raise "Encountered an error while trying to download from TypeForm: {}".format(response.status_code)
         return response
 
-    def fetch(self):
-        """ Download data for a form and convert to a data frame"""
+    def fetch(self, index=None, transform=None):
+        """ Download data for a form and convert to a data frame. We can specify
+        the key to use as the index including any tranform we require to get it in a
+        shape to use as an index. This requires you know the shape of the data when
+        passing in the key transform func"""
         data = self.fetch_data()
 
         responses = [x for x in data.json()['responses'] if x['completed'] == '1']
@@ -380,6 +383,13 @@ class TypeFormSurvey(Survey):
                 data[key].append(r.get(key, pd.NaT))
 
         self._responses = pd.DataFrame(data).rename(columns=questions)
+
+        if transform:
+            self._responses[index] = self._responses[index].map(transform)
+
+        if index:
+            self._responses = self._responses.set_index(index)
+
         self.process()
         return self
 
