@@ -355,9 +355,9 @@ class TypeFormSurvey(Survey):
     def url(self):
         return self.typeform_url.format(self.form_uuid, self.api_key)
 
-    def config(self, api_key, form_uuid):
-        self.api_key = api_key
-        self.form_uuid = form_uuid
+    def config(self, token=None, uuid=None):
+        self.api_key = token
+        self.form_uuid = uuid
 
     def fetch_data(self):
         response = requests.get(self.url)
@@ -380,12 +380,11 @@ class TypeFormSurvey(Survey):
                 data[key].append(r.get(key, pd.NaT))
 
         self._responses = pd.DataFrame(data).rename(columns=questions)
+        self.process()
         return self
 
 # NOTE:: Lets dry this up so we don't have a bunch of these
 # yaml parsers laying around
-
-
 def typeform_survey_yaml_constructor(loader, node):
     survey = TypeFormSurvey()
     values = loader.construct_mapping(node, deep=True)
