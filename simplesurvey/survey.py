@@ -380,6 +380,8 @@ class TypeFormSurvey(Survey):
 
 # NOTE:: Lets dry this up so we don't have a bunch of these
 # yaml parsers laying around
+
+
 def typeform_survey_yaml_constructor(loader, node):
     survey = TypeFormSurvey()
     values = loader.construct_mapping(node, deep=True)
